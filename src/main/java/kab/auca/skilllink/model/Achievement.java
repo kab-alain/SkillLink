@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "achievements")
 public class Achievement {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long achievementId;
@@ -26,4 +27,44 @@ public class Achievement {
     private LocalDate dateEarned;
 
     // Getters and Setters
+
+    public Long getAchievementId() {
+        return achievementId;
+    }
+
+    public void setAchievementId(Long achievementId) {
+        this.achievementId = achievementId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getBadge() {
+        return badge;
+    }
+
+    public void setBadge(String badge) {
+        this.badge = badge;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
+    }
+
+    public LocalDate getDateEarned() {
+        return dateEarned;
+    }
+
+    public void setDateEarned(LocalDate dateEarned) {
+        this.dateEarned = dateEarned;
+    }
 }
