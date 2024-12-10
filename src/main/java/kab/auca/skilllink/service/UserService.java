@@ -1,10 +1,17 @@
 package kab.auca.skilllink.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import kab.auca.skilllink.model.User;
 import kab.auca.skilllink.repository.UserRepository;
@@ -17,22 +24,39 @@ public class UserService {
     private UserRepository userRepository;
 
     // Register a new user
-    public MessageResponse registerUser(User user) {
-        // Check if user already exists
-        if (userRepository.existsByEmail(user.getEmail())) {
-            return new MessageResponse("Error: Email is already taken!");
-        }
-        if (userRepository.existsByUsername(user.getName())) {
-            return new MessageResponse("Error: Username is already taken!");
-        }
-
-        // Encrypt password before saving
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        user.setPassword(encoder.encode(user.getPassword()));
-        userRepository.save(user);
-
-        return new MessageResponse("User registered successfully!");
+   public static MessageResponse registerUser(User user, MultipartFile imageFile) {
+    if (userRepository.existsByEmail(user.getEmail())) {
+        return new MessageResponse("Error: Email is already taken!");
     }
+    if (userRepository.existsByUsername(user.getUsername())) {
+        return new MessageResponse("Error: Username is already taken!");
+    }
+
+    // Save the image to a directory and set its path
+    if (imageFile != null && !imageFile.isEmpty()) {
+        try {
+            String imagePath = saveImage(imageFile);
+            user.setProfileImage(imagePath);
+        } catch (IOException e) {
+            return new MessageResponse("Error: Unable to save image!");
+        }
+    }
+
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    user.setPassword(encoder.encode(user.getPassword()));
+    userRepository.save(user);
+
+    return new MessageResponse("User registered successfully!");
+}
+
+private String saveImage(MultipartFile imageFile) throws IOException {
+    String uploadDir = "path/to/image/directory/"; // Replace with your image folder path
+    String fileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
+    Path filePath = Paths.get(uploadDir + fileName);
+    Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+    return filePath.toString();
+}
+
 
     // Find user by email
     public Optional<User> findUserByEmail(String email) {
