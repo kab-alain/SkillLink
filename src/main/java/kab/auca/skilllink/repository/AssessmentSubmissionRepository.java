@@ -9,6 +9,6 @@ import kab.auca.skilllink.model.AssessmentSubmission;
 
 @Repository
 public interface AssessmentSubmissionRepository extends JpaRepository<AssessmentSubmission, Long> {
-    List<AssessmentSubmission> findByAssessmentId(Long assessmentId);
-    List<AssessmentSubmission> findByUserId(Long userId);
+    List<AssessmentSubmission> findByUser_UserId(Long userId);  // Corrected method name
+    List<AssessmentSubmission> findByAssessment_AssessmentId(Long assessmentId);  // Similarly adjust for AssessmentId
 }

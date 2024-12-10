@@ -23,12 +23,12 @@ public class MessageService {
 
     // Get messages by sender ID
     public List<Messages> getMessagesBySender(Long senderId) {
-        return messageRepository.findBySenderId(senderId);
+        return messageRepository.findBySender_UserId(senderId);
     }
 
     // Get messages by receiver ID
     public List<Messages> getMessagesByReceiver(Long receiverId) {
-        return messageRepository.findByReceiverId(receiverId);
+        return messageRepository.findByReceiver_UserId(receiverId);
     }
 
     // Delete a message by ID

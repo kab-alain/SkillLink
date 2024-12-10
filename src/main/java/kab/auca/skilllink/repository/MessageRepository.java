@@ -9,6 +9,6 @@ import kab.auca.skilllink.model.Messages;
 
 @Repository
 public interface MessageRepository extends JpaRepository<Messages, Long> {
-    List<Messages> findBySenderId(Long senderId);
-    List<Messages> findByReceiverId(Long receiverId);
+    List<Messages> findBySender_UserId(Long senderId);
+List<Messages> findByReceiver_UserId(Long receiverId);
 }

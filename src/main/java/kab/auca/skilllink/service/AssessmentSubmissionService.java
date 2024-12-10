@@ -23,11 +23,11 @@ public class AssessmentSubmissionService {
     }
 
     public List<AssessmentSubmission> getSubmissionsByAssessmentId(Long assessmentId) {
-        return assessmentSubmissionRepository.findByAssessmentId(assessmentId);
+        return assessmentSubmissionRepository.findByAssessment_AssessmentId(assessmentId);
     }
 
     public List<AssessmentSubmission> getSubmissionsByUserId(Long userId) {
-        return assessmentSubmissionRepository.findByUserId(userId);
+        return assessmentSubmissionRepository.findByUser_UserId(userId);
     }
 
     public void deleteSubmission(Long submissionId) {

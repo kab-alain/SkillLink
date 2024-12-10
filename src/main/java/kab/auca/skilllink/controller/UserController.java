@@ -61,6 +61,7 @@ public class UserController {
 
         if (existingUser.isPresent()) {
             User user = existingUser.get();
+            user.setUsername(userDetails.getUsername()); // Update username
             user.setName(userDetails.getName());
             user.setEmail(userDetails.getEmail());
             user.setPassword(userDetails.getPassword());
@@ -90,6 +91,13 @@ public class UserController {
     @GetMapping("/search")
     public ResponseEntity<List<User>> searchUsersByName(@RequestParam String name) {
         List<User> users = userRepository.findByNameContainingIgnoreCase(name);
+        return ResponseEntity.ok(users);
+    }
+
+    // Search users by username
+    @GetMapping("/search/username")
+    public ResponseEntity<Optional<User>> searchUsersByUsername(@RequestParam String username) {
+        Optional<User> users = userRepository.findByUsername(username); // Assuming this method is defined in UserRepository
         return ResponseEntity.ok(users);
     }
 }

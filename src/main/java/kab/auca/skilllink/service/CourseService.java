@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kab.auca.skilllink.model.Course;
+import kab.auca.skilllink.model.User;
 import kab.auca.skilllink.repository.CourseRepository;
 
 @Service
