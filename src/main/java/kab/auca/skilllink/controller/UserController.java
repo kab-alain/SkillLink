@@ -94,6 +94,33 @@ private String saveImage(MultipartFile imageFile) throws IOException {
     return filePath.toString();
 }
 
+  // Login method to check username and password
+  @PostMapping("/login")
+  public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+      // Extract username and password from the login request
+      String username = loginRequest.getUsername();
+      String password = loginRequest.getPassword();
+
+      // Find the user by username
+      Optional<User> userOptional = userRepository.findByUsername(username);
+
+      // Check if user exists
+      if (userOptional.isPresent()) {
+          User user = userOptional.get();
+          
+          // Check if password matches
+          if (user.getPassword().equals(password)) {
+              return ResponseEntity.ok(user);  // Return user if login is successful
+          } else {
+              return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                      .body(new MessageResponse("Error: Invalid password."));
+          }
+      } else {
+          return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                  .body(new MessageResponse("Error: User not found."));
+      }
+  }
+
 
     
 

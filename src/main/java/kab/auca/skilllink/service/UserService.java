@@ -21,14 +21,14 @@ import kab.auca.skilllink.response.MessageResponse;
 public class UserService {
 
     @Autowired
-    private UserRepository userRepository;
-
-    // Register a new user
-   public static MessageResponse registerUser(User user, MultipartFile imageFile) {
-    if (userRepository.existsByEmail(user.getEmail())) {
-        return new MessageResponse("Error: Email is already taken!");
-    }
-    if (userRepository.existsByUsername(user.getUsername())) {
+    private static UserRepository userRepository;
+    
+        // Register a new user
+       public static MessageResponse registerUser(User user, MultipartFile imageFile) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            return new MessageResponse("Error: Email is already taken!");
+        }
+        if (userRepository.existsByUsername(user.getUsername())) {
         return new MessageResponse("Error: Username is already taken!");
     }
 
@@ -36,20 +36,20 @@ public class UserService {
     if (imageFile != null && !imageFile.isEmpty()) {
         try {
             String imagePath = saveImage(imageFile);
-            user.setProfileImage(imagePath);
-        } catch (IOException e) {
-            return new MessageResponse("Error: Unable to save image!");
-        }
-    }
-
-    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    user.setPassword(encoder.encode(user.getPassword()));
-    userRepository.save(user);
-
-    return new MessageResponse("User registered successfully!");
-}
-
-private String saveImage(MultipartFile imageFile) throws IOException {
+                        user.setProfileImage(imagePath);
+                    } catch (IOException e) {
+                        return new MessageResponse("Error: Unable to save image!");
+                    }
+                }
+            
+                BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+                user.setPassword(encoder.encode(user.getPassword()));
+                userRepository.save(user);
+            
+                return new MessageResponse("User registered successfully!");
+            }
+            
+            private static String saveImage(MultipartFile imageFile) throws IOException {
     String uploadDir = "path/to/image/directory/"; // Replace with your image folder path
     String fileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
     Path filePath = Paths.get(uploadDir + fileName);
