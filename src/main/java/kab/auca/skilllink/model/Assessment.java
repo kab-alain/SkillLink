@@ -22,5 +22,43 @@ public class Assessment {
     private String type; // Quiz, Project, Peer Review
     private Integer maxScore;
 
-    // Getters and Setters
+    // Getter for assessmentId
+    public Long getAssessmentId() {
+        return assessmentId;
+    }
+
+    // Setter for assessmentId
+    public void setAssessmentId(Long assessmentId) {
+        this.assessmentId = assessmentId;
+    }
+
+    // Getter for course
+    public Course getCourse() {
+        return course;
+    }
+
+    // Setter for course
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    // Getter for type
+    public String getType() {
+        return type;
+    }
+
+    // Setter for type
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    // Getter for maxScore
+    public Integer getMaxScore() {
+        return maxScore;
+    }
+
+    // Setter for maxScore
+    public void setMaxScore(Integer maxScore) {
+        this.maxScore = maxScore;
+    }
 }

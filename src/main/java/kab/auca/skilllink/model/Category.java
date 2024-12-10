@@ -15,5 +15,23 @@ public class Category {
 
     private String name;
 
-    // Getters and Setters
+    // Getter for categoryId
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    // Setter for categoryId
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    // Getter for name
+    public String getName() {
+        return name;
+    }
+
+    // Setter for name
+    public void setName(String name) {
+        this.name = name;
+    }
 }

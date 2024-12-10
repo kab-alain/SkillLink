@@ -66,10 +66,11 @@ public class CourseController {
     }
 
     @GetMapping("/instructor/{instructorId}")
-    public ResponseEntity<List<Course>> getCoursesByInstructor(@PathVariable Long instructorId) {
-        List<Course> courses = courseService.getCoursesByInstructor(new User(instructorId));
-        return ResponseEntity.ok(courses);
-    }
+public ResponseEntity<List<Course>> getCoursesByInstructor(@PathVariable Long instructorId) {
+    List<Course> courses = courseService.getCoursesByInstructor(new User(instructorId));
+    return ResponseEntity.ok(courses);
+}
+
 
     @GetMapping("/category/{categoryName}")
     public ResponseEntity<List<Course>> getCoursesByCategory(@PathVariable String categoryName) {
