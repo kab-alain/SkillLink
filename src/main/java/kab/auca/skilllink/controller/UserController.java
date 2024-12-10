@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kab.auca.skilllink.model.User;
 import kab.auca.skilllink.repository.UserRepository;
 import kab.auca.skilllink.response.MessageResponse;
@@ -55,9 +57,14 @@ public class UserController {
     // Create a new user
     @PostMapping
 public ResponseEntity<?> createUser(
-        @RequestPart("user") User user,
+        @RequestPart("user") String userJson, // Receive user as a JSON string
         @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
+
     try {
+        // Deserialize the JSON string to a User object
+        ObjectMapper objectMapper = new ObjectMapper();
+        User user = objectMapper.readValue(userJson, User.class);
+
         // Check if email or username is already taken
         if (userRepository.existsByEmail(user.getEmail())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -85,15 +92,19 @@ public ResponseEntity<?> createUser(
                 .body(new MessageResponse("Error: An unexpected error occurred."));
     }
 }
+
 private String saveImage(MultipartFile imageFile) throws IOException {
-    String uploadDir = "path/to/image/directory/"; // Replace with your desired upload path
+    String uploadDir = System.getProperty("user.dir") + "/uploads/";
     String fileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
     Path filePath = Paths.get(uploadDir + fileName);
+    
     Files.createDirectories(filePath.getParent()); // Ensure the directory exists
     Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-    return filePath.toString();
+    
+    return filePath.toString(); // Return the relative file path
 }
 
+    
   // Login method to check username and password
   @PostMapping("/login")
   public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
