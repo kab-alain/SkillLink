@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -103,37 +105,36 @@ private String saveImage(MultipartFile imageFile) throws IOException {
     
     return filePath.toString(); // Return the relative file path
 }
+@PostMapping("/login")
+public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+    // Extract username and password from the login request
+    String username = loginRequest.getUsername();
+    String password = loginRequest.getPassword();
 
-    
-  // Login method to check username and password
-  @PostMapping("/login")
-  public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
-      // Extract username and password from the login request
-      String username = loginRequest.getUsername();
-      String password = loginRequest.getPassword();
+    // Find the user by username
+    Optional<User> userOptional = userRepository.findByUsername(username);
 
-      // Find the user by username
-      Optional<User> userOptional = userRepository.findByUsername(username);
-
-      // Check if user exists
-      if (userOptional.isPresent()) {
-          User user = userOptional.get();
-          
-          // Check if password matches
-          if (user.getPassword().equals(password)) {
-              return ResponseEntity.ok(user);  // Return user if login is successful
-          } else {
-              return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                      .body(new MessageResponse("Error: Invalid password."));
-          }
-      } else {
-          return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                  .body(new MessageResponse("Error: User not found."));
-      }
-  }
-
-
-    
+    if (userOptional.isPresent()) {
+        User user = userOptional.get();
+        
+        // Check if the password matches directly (no hashing)
+        if (password.equals(user.getPassword())) {
+            // Create a response object containing user information and role
+            Map<String, Object> response = new HashMap<>();
+            response.put("userId", user.getUserId());
+            response.put("username", user.getUsername());
+            response.put("role", user.getRole());
+            
+            return ResponseEntity.ok(response); // Return user data with role
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Error: Invalid password."));
+        }
+    } else {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new MessageResponse("Error: User not found."));
+    }
+}
 
     // Update user by ID
     @PutMapping("/{id}")
