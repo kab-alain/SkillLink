@@ -1,5 +1,7 @@
 package kab.auca.skilllink.model;
 
+import java.util.Date;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,6 +23,7 @@ public class Assessment {
 
     private String type; // Quiz, Project, Peer Review
     private Integer maxScore;
+    // private Date deadline;
 
     // Getter for assessmentId
     public Long getAssessmentId() {
