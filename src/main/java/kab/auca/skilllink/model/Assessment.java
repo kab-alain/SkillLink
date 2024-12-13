@@ -1,6 +1,6 @@
 package kab.auca.skilllink.model;
 
-import java.util.Date;
+// import java.util.Date;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
