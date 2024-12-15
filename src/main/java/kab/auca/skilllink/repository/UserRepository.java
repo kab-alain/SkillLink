@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import kab.auca.skilllink.model.User;
@@ -15,6 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Check if a user exists by email
     boolean existsByEmail(String email);
+
     boolean existsByUsername(String name);
 
     // Find a user by email
@@ -27,5 +30,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Find all users with a specific role
     List<User> findByRole(String role);
-    
+
+    @Query("SELECT u FROM User u WHERE u.name LIKE %:query%")
+    List<User> searchByName(@Param("query") String query);
+
 }
