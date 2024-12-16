@@ -134,8 +134,14 @@ public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
             // Generate OTP
             String otp = generateOtp();
 
-            // Store OTP temporarily (for this example, in-memory storage or use database)
-            user.setOtp(otp); // Store OTP temporarily for validation (add OTP field to User entity)
+            // Log OTP to ensure it is generated correctly
+            System.out.println("Generated OTP: " + otp);
+
+            // Store OTP temporarily for validation
+            user.setOtp(otp);
+
+            // Save user with OTP to database
+            userRepository.save(user);
 
             // Send OTP to user's email
             sendOtpEmail(user.getEmail(), otp);
@@ -173,12 +179,18 @@ public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
         user.setOtp(null);  // Clear OTP after successful verification (for security)
         userRepository.save(user);  // Save the updated user record
 
-        return ResponseEntity.ok(new MessageResponse("Login successful!"));
+        // Return user role along with success message
+        return ResponseEntity.ok(Map.of(
+            "message", "Login successful!",
+            "role", user.getRole() // Include role in response
+        ));
     } else {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new MessageResponse("Error: User not found."));
     }
 }
+
+
 
 
     // Update user by ID
@@ -237,19 +249,7 @@ public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
         }
     }
     
-@RestController
-public class EmailController {
 
-    @Autowired
-    private EmailService emailService;
-
-    @GetMapping("/send-email")
-    public String sendTestEmail() {
-        // Sending an email using the EmailService
-        emailService.sendEmail("recipient@example.com", "Test Email", "This is a test email from SendGrid.");
-        return "Email sent successfully!";
-    }
-}
 
 
     // Search users by name
