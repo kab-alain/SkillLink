@@ -20,6 +20,7 @@ public class User {
     private String role; // Learner, Instructor, Admin
     private String skills; // Comma-separated or use a many-to-many relation
     private String profileImage;
+    private String otp; 
 
     // No-args constructor (required by JPA)
     public User() {}
@@ -93,4 +94,14 @@ public class User {
     public void setProfileImage(String profileImage) {
         this.profileImage = profileImage;
     }
+     // Add this field in the User class
+
+     public String getOtp() {
+             return otp;
+}
+
+public void setOtp(String otp) {
+    this.otp = otp;
+}
+
 }

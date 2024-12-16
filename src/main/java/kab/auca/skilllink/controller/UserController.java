@@ -5,10 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +48,19 @@ public class UserController {
         List<User> users = userRepository.findAll();
         return ResponseEntity.ok(users);
     }
+
+
+public String generateOtp() {
+    Random random = new Random();
+    int otp = 100000 + random.nextInt(900000); // 6-digit OTP
+    return String.valueOf(otp);
+}
+
+public void sendOtpEmail(String email, String otp) {
+    String subject = "Your Skillink OTP Code";
+    String message = String.format("Your OTP for Skillink login is: %s", otp);
+    emailService.sendEmail(email, subject, message);
+}
 
     // Get user by ID
     @GetMapping("/{id}")
@@ -106,27 +119,28 @@ private String saveImage(MultipartFile imageFile) throws IOException {
     
     return filePath.toString(); // Return the relative file path
 }
+
 @PostMapping("/login")
 public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
-    // Extract username and password from the login request
     String username = loginRequest.getUsername();
     String password = loginRequest.getPassword();
 
-    // Find the user by username
     Optional<User> userOptional = userRepository.findByUsername(username);
 
     if (userOptional.isPresent()) {
         User user = userOptional.get();
         
-        // Check if the password matches directly (no hashing)
         if (password.equals(user.getPassword())) {
-            // Create a response object containing user information and role
-            Map<String, Object> response = new HashMap<>();
-            response.put("userId", user.getUserId());
-            response.put("username", user.getUsername());
-            response.put("role", user.getRole());
+            // Generate OTP
+            String otp = generateOtp();
+
+            // Store OTP temporarily (for this example, in-memory storage or use database)
+            user.setOtp(otp); // Store OTP temporarily for validation (add OTP field to User entity)
+
+            // Send OTP to user's email
+            sendOtpEmail(user.getEmail(), otp);
             
-            return ResponseEntity.ok(response); // Return user data with role
+            return ResponseEntity.ok(new MessageResponse("OTP sent to your email. Please enter it to complete login."));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new MessageResponse("Error: Invalid password."));
@@ -136,6 +150,36 @@ public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
                 .body(new MessageResponse("Error: User not found."));
     }
 }
+
+@PostMapping("/verify-otp")
+public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
+    String username = request.get("username");
+    String otpEntered = request.get("otp");
+
+    // Debug log to check what OTP is being received
+    System.out.println("Received OTP: " + otpEntered);
+
+    Optional<User> userOptional = userRepository.findByUsername(username);
+    if (userOptional.isPresent()) {
+        User user = userOptional.get();
+
+        // Check if OTP matches
+        if (user.getOtp() == null || !user.getOtp().equals(otpEntered)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResponse("Error: Invalid OTP."));
+        }
+
+        // OTP is valid, proceed with login
+        user.setOtp(null);  // Clear OTP after successful verification (for security)
+        userRepository.save(user);  // Save the updated user record
+
+        return ResponseEntity.ok(new MessageResponse("Login successful!"));
+    } else {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new MessageResponse("Error: User not found."));
+    }
+}
+
 
     // Update user by ID
     @PutMapping("/{id}")
