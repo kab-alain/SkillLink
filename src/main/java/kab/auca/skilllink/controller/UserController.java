@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kab.auca.skilllink.model.User;
 import kab.auca.skilllink.repository.UserRepository;
 import kab.auca.skilllink.response.MessageResponse;
+import kab.auca.skilllink.service.EmailService;
 
 @RestController
 @RequestMapping("/api/users")
@@ -168,6 +169,44 @@ public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
+    @Autowired private
+    EmailService emailService;
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+    
+        // Check if the email exists
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+    
+            // Send email with credentials
+            String subject = "Skillink Password Recovery";
+            String message = String.format("Dear %s,\n\nYour credentials are as follows:\nUsername: %s\nPassword: %s\n\nRegards,\nSkillink Team",
+                    user.getName(), user.getUsername(), user.getPassword()); // Sending the plaintext password
+    
+            emailService.sendEmail(email, subject, message);
+            return ResponseEntity.ok(new MessageResponse("Password sent to your email."));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Error: Email not found."));
+        }
+    }
+    
+@RestController
+public class EmailController {
+
+    @Autowired
+    private EmailService emailService;
+
+    @GetMapping("/send-email")
+    public String sendTestEmail() {
+        // Sending an email using the EmailService
+        emailService.sendEmail("recipient@example.com", "Test Email", "This is a test email from SendGrid.");
+        return "Email sent successfully!";
+    }
+}
+
 
     // Search users by name
     @GetMapping("/search")
