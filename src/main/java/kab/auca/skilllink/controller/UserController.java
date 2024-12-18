@@ -49,18 +49,17 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    public String generateOtp() {
+        Random random = new Random();
+        int otp = 100000 + random.nextInt(900000); // 6-digit OTP
+        return String.valueOf(otp);
+    }
 
-public String generateOtp() {
-    Random random = new Random();
-    int otp = 100000 + random.nextInt(900000); // 6-digit OTP
-    return String.valueOf(otp);
-}
-
-public void sendOtpEmail(String email, String otp) {
-    String subject = "Your Skillink OTP Code";
-    String message = String.format("Your OTP for Skillink login is: %s", otp);
-    emailService.sendEmail(email, subject, message);
-}
+    public void sendOtpEmail(String email, String otp) {
+        String subject = "Your Skillink OTP Code";
+        String message = String.format("Your OTP for Skillink login is: %s", otp);
+        emailService.sendEmail(email, subject, message);
+    }
 
     // Get user by ID
     @GetMapping("/{id}")
@@ -72,126 +71,124 @@ public void sendOtpEmail(String email, String otp) {
 
     // Create a new user
     @PostMapping
-public ResponseEntity<?> createUser(
-        @RequestPart("user") String userJson, // Receive user as a JSON string
-        @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
+    public ResponseEntity<?> createUser(
+            @RequestPart("user") String userJson, // Receive user as a JSON string
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
 
-    try {
-        // Deserialize the JSON string to a User object
-        ObjectMapper objectMapper = new ObjectMapper();
-        User user = objectMapper.readValue(userJson, User.class);
+        try {
+            // Deserialize the JSON string to a User object
+            ObjectMapper objectMapper = new ObjectMapper();
+            User user = objectMapper.readValue(userJson, User.class);
 
-        // Check if email or username is already taken
-        if (userRepository.existsByEmail(user.getEmail())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new MessageResponse("Error: Email is already taken!"));
+            // Check if email or username is already taken
+            if (userRepository.existsByEmail(user.getEmail())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new MessageResponse("Error: Email is already taken!"));
+            }
+            if (userRepository.existsByUsername(user.getUsername())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new MessageResponse("Error: Username is already taken!"));
+            }
+
+            // Handle image upload (if provided)
+            if (imageFile != null && !imageFile.isEmpty()) {
+                String imagePath = saveImage(imageFile);
+                user.setProfileImage(imagePath); // Set image path in user object
+            }
+
+            // Save the new user
+            User newUser = userRepository.save(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error: Unable to save the image."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error: An unexpected error occurred."));
         }
-        if (userRepository.existsByUsername(user.getUsername())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new MessageResponse("Error: Username is already taken!"));
-        }
-
-        // Handle image upload (if provided)
-        if (imageFile != null && !imageFile.isEmpty()) {
-            String imagePath = saveImage(imageFile);
-            user.setProfileImage(imagePath); // Set image path in user object
-        }
-
-        // Save the new user
-        User newUser = userRepository.save(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
-    } catch (IOException e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new MessageResponse("Error: Unable to save the image."));
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new MessageResponse("Error: An unexpected error occurred."));
     }
-}
 
-private String saveImage(MultipartFile imageFile) throws IOException {
-    String uploadDir = System.getProperty("user.dir") + "/uploads/";
-    String fileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
-    Path filePath = Paths.get(uploadDir + fileName);
-    
-    Files.createDirectories(filePath.getParent()); // Ensure the directory exists
-    Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-    
-    return filePath.toString(); // Return the relative file path
-}
+    private String saveImage(MultipartFile imageFile) throws IOException {
+        String uploadDir = System.getProperty("user.dir") + "/uploads/";
+        String fileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
+        Path filePath = Paths.get(uploadDir + fileName);
 
-@PostMapping("/login")
-public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
-    String username = loginRequest.getUsername();
-    String password = loginRequest.getPassword();
+        Files.createDirectories(filePath.getParent()); // Ensure the directory exists
+        Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-    Optional<User> userOptional = userRepository.findByUsername(username);
+        return filePath.toString(); // Return the relative file path
+    }
 
-    if (userOptional.isPresent()) {
-        User user = userOptional.get();
-        
-        if (password.equals(user.getPassword())) {
-            // Generate OTP
-            String otp = generateOtp();
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+        String username = loginRequest.getUsername();
+        String password = loginRequest.getPassword();
 
-            // Log OTP to ensure it is generated correctly
-            System.out.println("Generated OTP: " + otp);
+        Optional<User> userOptional = userRepository.findByUsername(username);
 
-            // Store OTP temporarily for validation
-            user.setOtp(otp);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
 
-            // Save user with OTP to database
-            userRepository.save(user);
+            if (password.equals(user.getPassword())) {
+                // Generate OTP
+                String otp = generateOtp();
 
-            // Send OTP to user's email
-            sendOtpEmail(user.getEmail(), otp);
-            
-            return ResponseEntity.ok(new MessageResponse("OTP sent to your email. Please enter it to complete login."));
+                // Log OTP to ensure it is generated correctly
+                System.out.println("Generated OTP: " + otp);
+
+                // Store OTP temporarily for validation
+                user.setOtp(otp);
+
+                // Save user with OTP to database
+                userRepository.save(user);
+
+                // Send OTP to user's email
+                sendOtpEmail(user.getEmail(), otp);
+
+                return ResponseEntity
+                        .ok(new MessageResponse("OTP sent to your email. Please enter it to complete login."));
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new MessageResponse("Error: Invalid password."));
+            }
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new MessageResponse("Error: Invalid password."));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResponse("Error: User not found."));
         }
-    } else {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new MessageResponse("Error: User not found."));
     }
-}
 
-@PostMapping("/verify-otp")
-public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
-    String username = request.get("username");
-    String otpEntered = request.get("otp");
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
+        String username = request.get("username");
+        String otpEntered = request.get("otp");
 
-    // Debug log to check what OTP is being received
-    System.out.println("Received OTP: " + otpEntered);
+        // Debug log to check what OTP is being received
+        System.out.println("Received OTP: " + otpEntered);
 
-    Optional<User> userOptional = userRepository.findByUsername(username);
-    if (userOptional.isPresent()) {
-        User user = userOptional.get();
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
 
-        // Check if OTP matches
-        if (user.getOtp() == null || !user.getOtp().equals(otpEntered)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new MessageResponse("Error: Invalid OTP."));
+            // Check if OTP matches
+            if (user.getOtp() == null || !user.getOtp().equals(otpEntered)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new MessageResponse("Error: Invalid OTP."));
+            }
+
+            // OTP is valid, proceed with login
+            user.setOtp(null); // Clear OTP after successful verification (for security)
+            userRepository.save(user); // Save the updated user record
+
+            // Return user role along with success message
+            return ResponseEntity.ok(Map.of(
+                    "message", "Login successful!",
+                    "role", user.getRole(), // Include role in response
+                    "userId", user.getUserId()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResponse("Error: User not found."));
         }
-
-        // OTP is valid, proceed with login
-        user.setOtp(null);  // Clear OTP after successful verification (for security)
-        userRepository.save(user);  // Save the updated user record
-
-        // Return user role along with success message
-        return ResponseEntity.ok(Map.of(
-            "message", "Login successful!",
-            "role", user.getRole() // Include role in response
-        ));
-    } else {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new MessageResponse("Error: User not found."));
     }
-}
-
-
-
 
     // Update user by ID
     @PutMapping("/{id}")
@@ -226,31 +223,30 @@ public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
         }
     }
 
-    @Autowired private
-    EmailService emailService;
+    @Autowired
+    private EmailService emailService;
+
     @PostMapping("/forgot-password")
     public ResponseEntity<MessageResponse> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-    
+
         // Check if the email exists
         Optional<User> userOptional = userRepository.findByEmail(email);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-    
+
             // Send email with credentials
             String subject = "Skillink Password Recovery";
-            String message = String.format("Dear %s,\n\nYour credentials are as follows:\nUsername: %s\nPassword: %s\n\nRegards,\nSkillink Team",
+            String message = String.format(
+                    "Dear %s,\n\nYour credentials are as follows:\nUsername: %s\nPassword: %s\n\nRegards,\nSkillink Team",
                     user.getName(), user.getUsername(), user.getPassword()); // Sending the plaintext password
-    
+
             emailService.sendEmail(email, subject, message);
             return ResponseEntity.ok(new MessageResponse("Password sent to your email."));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Error: Email not found."));
         }
     }
-    
-
-
 
     // Search users by name
     @GetMapping("/search")
@@ -262,7 +258,8 @@ public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
     // Search users by username
     @GetMapping("/search/username")
     public ResponseEntity<Optional<User>> searchUsersByUsername(@RequestParam String username) {
-        Optional<User> users = userRepository.findByUsername(username); // Assuming this method is defined in UserRepository
+        Optional<User> users = userRepository.findByUsername(username); // Assuming this method is defined in
+                                                                        // UserRepository
         return ResponseEntity.ok(users);
     }
 }
