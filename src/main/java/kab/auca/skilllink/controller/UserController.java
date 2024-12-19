@@ -120,42 +120,45 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
-        String username = loginRequest.getUsername();
-        String password = loginRequest.getPassword();
+public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+    String username = loginRequest.getUsername();
+    String password = loginRequest.getPassword();
 
-        Optional<User> userOptional = userRepository.findByUsername(username);
-
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-
-            if (password.equals(user.getPassword())) {
-                // Generate OTP
-                String otp = generateOtp();
-
-                // Log OTP to ensure it is generated correctly
-                System.out.println("Generated OTP: " + otp);
-
-                // Store OTP temporarily for validation
-                user.setOtp(otp);
-
-                // Save user with OTP to database
-                userRepository.save(user);
-
-                // Send OTP to user's email
-                sendOtpEmail(user.getEmail(), otp);
-
-                return ResponseEntity
-                        .ok(new MessageResponse("OTP sent to your email. Please enter it to complete login."));
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new MessageResponse("Error: Invalid password."));
-            }
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new MessageResponse("Error: User not found."));
-        }
+    // Validate input
+    if (username == null || username.trim().isEmpty()) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new MessageResponse("Error: Username cannot be empty."));
     }
+    if (password == null || password.trim().isEmpty()) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new MessageResponse("Error: Password cannot be empty."));
+    }
+
+    Optional<User> userOptional = userRepository.findByUsername(username);
+
+    if (userOptional.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new MessageResponse("Error: No account found with username: " + username));
+    }
+
+    User user = userOptional.get();
+    if (!password.equals(user.getPassword())) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new MessageResponse("Error: Invalid password for user: " + username));
+    }
+
+    
+
+    // Authentication successful, proceed with OTP
+    String otp = generateOtp();
+    System.out.println("Generated OTP: " + otp);
+    
+    user.setOtp(otp);
+    userRepository.save(user);
+    sendOtpEmail(user.getEmail(), otp);
+    
+    return ResponseEntity.ok(new MessageResponse("OTP sent to your email. Please enter it to complete login."));
+}
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
