@@ -1,6 +1,7 @@
 package kab.auca.skilllink.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,9 +29,14 @@ public class CourseController {
     private CourseService courseService;
 
     @PostMapping("/create")
-    public ResponseEntity<Course> createCourse(@RequestBody Course course) {
-        Course createdCourse = courseService.createCourse(course);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdCourse);
+    public ResponseEntity<?> createCourse(@RequestBody Course course) {
+        try {
+            Course createdCourse = courseService.createCourse(course);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdCourse);
+        } catch (IllegalArgumentException e) {
+            // Return the error message as a response body with BAD_REQUEST status
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/update/{courseId}")
@@ -66,11 +72,10 @@ public class CourseController {
     }
 
     @GetMapping("/instructor/{instructorId}")
-public ResponseEntity<List<Course>> getCoursesByInstructor(@PathVariable Long instructorId) {
-    List<Course> courses = courseService.getCoursesByInstructor(new User(instructorId));
-    return ResponseEntity.ok(courses);
-}
-
+    public ResponseEntity<List<Course>> getCoursesByInstructor(@PathVariable Long instructorId) {
+        List<Course> courses = courseService.getCoursesByInstructor(new User(instructorId));
+        return ResponseEntity.ok(courses);
+    }
 
     @GetMapping("/category/{categoryName}")
     public ResponseEntity<List<Course>> getCoursesByCategory(@PathVariable String categoryName) {

@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kab.auca.skilllink.model.Notifications;
+import kab.auca.skilllink.model.User;
 import kab.auca.skilllink.repository.NotificationsRepository;
+import kab.auca.skilllink.repository.UserRepository;
 import kab.auca.skilllink.response.MessageResponse;
 
 @Service
@@ -16,12 +18,31 @@ public class NotificationsService {
     @Autowired
     private NotificationsRepository notificationsRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     // Create a new notification
     public MessageResponse createNotification(Notifications notification) {
+        // Validate user and userId
+        if (isInvalidUser(notification.getUser())) {
+            return new MessageResponse("Invalid user.");
+        }
+
+        // Validate if the user exists in the database
+        if (!userRepository.existsById(notification.getUser().getUserId())) {
+            return new MessageResponse("Invalid user.");
+        }
+
+        // Set additional fields and save the notification
         notification.setTimestamp(LocalDateTime.now());
         notification.setStatus("unread");
         notificationsRepository.save(notification);
+
         return new MessageResponse("Notification created successfully.");
+    }
+
+    private boolean isInvalidUser(User user) {
+        return user == null || user.getUserId() == null;
     }
 
     // Get notifications by user ID

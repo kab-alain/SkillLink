@@ -32,7 +32,12 @@ public class NotificationsController {
     @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MessageResponse> createNotification(@RequestBody Notifications notification) {
         MessageResponse response = notificationsService.createNotification(notification);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        // Determine the HTTP status based on the response message
+        HttpStatus status = "Invalid user".equals(response.getMessage()) ? HttpStatus.BAD_REQUEST : HttpStatus.CREATED;
+
+        // Return the response entity with the appropriate status
+        return ResponseEntity.status(status).body(response);
     }
 
     // Get notifications by user ID

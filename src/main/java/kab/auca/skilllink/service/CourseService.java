@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import kab.auca.skilllink.model.Course;
 import kab.auca.skilllink.model.User;
 import kab.auca.skilllink.repository.CourseRepository;
+// import kab.auca.skilllink.repository.UserRepository;
 
 @Service
 public class CourseService {
@@ -16,6 +17,16 @@ public class CourseService {
     private CourseRepository courseRepository;
 
     public Course createCourse(Course course) {
+        if (courseRepository.existsByTitleAndLevel(course.getTitle(), course.getLevel())) {
+            throw new IllegalArgumentException("A course with the same title and level already exists.");
+        }
+        // if (!userRepository.existsById(course.getInstructor().getUserId())) {
+        // throw new IllegalArgumentException("Instructor does not exist.");
+        // }
+        if (course.getInstructor() == null || course.getInstructor().getUserId() == null) {
+            throw new IllegalArgumentException("Instructor information is missing.");
+        }
+
         return courseRepository.save(course);
     }
 

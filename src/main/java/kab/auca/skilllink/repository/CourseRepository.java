@@ -12,6 +12,9 @@ import kab.auca.skilllink.model.User;
 
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
+
+    boolean existsByTitleAndLevel(String title, String level);
+
     List<Course> findByInstructor(User instructor);
 
     List<Course> findByCategoryName(String categoryName);
