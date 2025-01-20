@@ -19,6 +19,7 @@ public class NotificationsService {
     // Create a new notification
     public MessageResponse createNotification(Notifications notification) {
         notification.setTimestamp(LocalDateTime.now());
+        notification.setStatus("unread");
         notificationsRepository.save(notification);
         return new MessageResponse("Notification created successfully.");
     }
