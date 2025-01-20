@@ -20,10 +20,11 @@ public class User {
     private String role; // Learner, Instructor, Admin
     private String skills; // Comma-separated or use a many-to-many relation
     private String profileImage;
-    private String otp; 
+    private String otp;
 
     // No-args constructor (required by JPA)
-    public User() {}
+    public User() {
+    }
 
     // Constructor with userId
     public User(Long userId) {
@@ -88,20 +89,24 @@ public class User {
     }
 
     public String getProfileImage() {
-        return profileImage;
+        // Base URL for serving images
+        String baseUrl = "http://localhost:8080/uploads/";
+
+        // Return the full URL if profileImage is not null, otherwise return null
+        return profileImage != null ? baseUrl + profileImage : null;
     }
 
     public void setProfileImage(String profileImage) {
         this.profileImage = profileImage;
     }
-     // Add this field in the User class
+    // Add this field in the User class
 
-     public String getOtp() {
-             return otp;
-}
+    public String getOtp() {
+        return otp;
+    }
 
-public void setOtp(String otp) {
-    this.otp = otp;
-}
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
 
 }

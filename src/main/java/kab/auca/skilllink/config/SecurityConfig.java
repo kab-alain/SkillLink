@@ -2,6 +2,7 @@ package kab.auca.skilllink.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,18 +16,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())  // Disable CSRF protection for simplicity in a REST API
-            .authorizeRequests(authz -> 
-                authz
-                    .anyRequest().permitAll()  // Allow all requests without authentication
-            )
-            .httpBasic();  // Enable HTTP Basic Authentication (optional, can be omitted if you don't want HTTP basic)
+                // CSRF Configuration
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
 
-        return http.build(); // Builds and returns the HTTP security configuration
+                // Authorization Rules
+                .authorizeHttpRequests(authz -> authz
+                        // .requestMatchers("/uploads/**").permitAll() // Allow public access to uploads
+                        .requestMatchers("/admin/**").hasRole("ADMIN") // Restrict to ADMIN role
+                        .requestMatchers("/user/**").authenticated() // Require authentication for /user/** endpoints
+                        .anyRequest().permitAll() // Permit all other requests (adjust as necessary)
+                )
+
+                // HTTP Basic Authentication
+                .httpBasic(Customizer.withDefaults()); // Replace deprecated `httpBasic()`
+
+        return http.build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();  // Password encoder for hashing passwords
+        return new BCryptPasswordEncoder(); // Use BCrypt for secure password hashing
     }
 }

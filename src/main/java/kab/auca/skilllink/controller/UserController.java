@@ -94,11 +94,18 @@ public class UserController {
             if (imageFile != null && !imageFile.isEmpty()) {
                 String imagePath = saveImage(imageFile);
                 user.setProfileImage(imagePath); // Set image path in user object
+
             }
+            // Authentication successful, proceed with OTP
+            String otp = generateOtp();
+            System.out.println("Generated OTP: " + otp);
 
             // Save the new user
-            User newUser = userRepository.save(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+            user.setOtp(otp);
+            userRepository.save(user);
+            sendOtpEmail(user.getEmail(), otp);
+
+            return ResponseEntity.ok(new MessageResponse("OTP sent to your email. Please enter it to complete login."));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error: Unable to save the image."));
@@ -109,56 +116,57 @@ public class UserController {
     }
 
     private String saveImage(MultipartFile imageFile) throws IOException {
-        String uploadDir = System.getProperty("user.dir") + "/uploads/";
+        // Define the upload directory
+        String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/uploads/";
+
+        // Generate a unique filename
         String fileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
+
+        // Resolve the full file path
         Path filePath = Paths.get(uploadDir + fileName);
 
-        Files.createDirectories(filePath.getParent()); // Ensure the directory exists
+        // Ensure the upload directory exists
+        Files.createDirectories(filePath.getParent());
+
+        // Save the file
         Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        return filePath.toString(); // Return the relative file path
+        // Return only the file name, not the full relative path
+        return fileName; // Only return the file name
     }
 
     @PostMapping("/login")
-public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
-    String username = loginRequest.getUsername();
-    String password = loginRequest.getPassword();
+    public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+        String username = loginRequest.getUsername();
+        String password = loginRequest.getPassword();
 
-    // Validate input
-    if (username == null || username.trim().isEmpty()) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new MessageResponse("Error: Username cannot be empty."));
+        // Validate input
+        if (username == null || username.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResponse("Error: Username cannot be empty."));
+        }
+        if (password == null || password.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResponse("Error: Password cannot be empty."));
+        }
+
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResponse("Error: No account found with username: " + username));
+        }
+
+        User user = userOptional.get();
+        if (!password.equals(user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Error: Invalid password for user: " + username));
+        }
+
+        User newUser = userRepository.save(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+
     }
-    if (password == null || password.trim().isEmpty()) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new MessageResponse("Error: Password cannot be empty."));
-    }
-
-    Optional<User> userOptional = userRepository.findByUsername(username);
-
-    if (userOptional.isEmpty()) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new MessageResponse("Error: No account found with username: " + username));
-    }
-
-    User user = userOptional.get();
-    if (!password.equals(user.getPassword())) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new MessageResponse("Error: Invalid password for user: " + username));
-    }
-
-    
-
-    // Authentication successful, proceed with OTP
-    String otp = generateOtp();
-    System.out.println("Generated OTP: " + otp);
-    
-    user.setOtp(otp);
-    userRepository.save(user);
-    sendOtpEmail(user.getEmail(), otp);
-    
-    return ResponseEntity.ok(new MessageResponse("OTP sent to your email. Please enter it to complete login."));
-}
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
@@ -200,13 +208,23 @@ public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
 
         if (existingUser.isPresent()) {
             User user = existingUser.get();
-            user.setUsername(userDetails.getUsername()); // Update username
+
+            // Update fields
+            user.setUsername(userDetails.getUsername());
             user.setName(userDetails.getName());
             user.setEmail(userDetails.getEmail());
             user.setPassword(userDetails.getPassword());
             user.setRole(userDetails.getRole());
             user.setSkills(userDetails.getSkills());
-            user.setProfileImage(userDetails.getProfileImage());
+
+            // Clean up the profileImage path to avoid duplication
+            if (userDetails.getProfileImage() != null && !userDetails.getProfileImage().isEmpty()) {
+                String profileImage = userDetails.getProfileImage();
+                if (profileImage.startsWith("http://localhost:8080/uploads/")) {
+                    profileImage = profileImage.replace("http://localhost:8080/uploads/", "");
+                }
+                user.setProfileImage(profileImage);
+            }
 
             User updatedUser = userRepository.save(user);
             return ResponseEntity.ok(updatedUser);
