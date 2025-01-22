@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kab.auca.skilllink.model.Notifications;
 import kab.auca.skilllink.response.MessageResponse;
 import kab.auca.skilllink.service.NotificationsService;
@@ -56,7 +60,15 @@ public class NotificationsController {
 
     // Update notification status (e.g., from Unread to Read)
     @PutMapping(value = "/updateStatus/{notificationId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MessageResponse> updateStatus(@PathVariable Long notificationId, @RequestBody String status) {
+    public ResponseEntity<MessageResponse> updateStatus(
+            @PathVariable Long notificationId,
+            @RequestBody String requestBody) throws JsonProcessingException {
+
+        // Use ObjectMapper to parse the JSON
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(requestBody);
+        String status = jsonNode.get("status").asText();
+
         MessageResponse response = notificationsService.updateStatus(notificationId, status);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

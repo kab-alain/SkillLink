@@ -1,6 +1,7 @@
 package kab.auca.skilllink.model;
 
-import java.time.LocalDateTime;
+// import java.time.LocalDateTime;
+import java.util.Date;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -13,7 +14,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "assessment_submissions")
 public class AssessmentSubmission {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long submissionId;
@@ -27,7 +28,8 @@ public class AssessmentSubmission {
     private User user;
 
     private Integer score;
-    private LocalDateTime submissionDate;
+    private Date submissionDate;
+    private String status;// Marked or Unmarked
 
     // Getters and Setters
 
@@ -63,11 +65,19 @@ public class AssessmentSubmission {
         this.score = score;
     }
 
-    public LocalDateTime getSubmissionDate() {
+    public Date getSubmissionDate() {
         return submissionDate;
     }
 
-    public void setSubmissionDate(LocalDateTime submissionDate) {
+    public void setSubmissionDate(Date submissionDate) {
         this.submissionDate = submissionDate;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

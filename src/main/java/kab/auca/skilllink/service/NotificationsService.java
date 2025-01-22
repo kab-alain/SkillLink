@@ -52,7 +52,7 @@ public class NotificationsService {
 
     // Get unread notifications by user ID
     public List<Notifications> getUnreadNotifications(Long userId) {
-        return notificationsRepository.findByUser_UserIdAndStatus(userId, "Unread");
+        return notificationsRepository.findByUser_UserIdAndStatus(userId, "unread");
     }
 
     // Update notification status (e.g., from Unread to Read)
